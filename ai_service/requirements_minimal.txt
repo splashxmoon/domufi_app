@@ -1,0 +1,31 @@
+# Minimal Essential Dependencies for Domufi AI Service
+# These are the core packages needed to run the service
+
+# Core Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.31.0
+pydantic==2.9.2
+pydantic-settings==2.11.0
+python-dotenv==1.0.1
+
+# HTTP Client
+httpx==0.27.2
+
+# Database
+supabase==2.23.2
+
+# ML & AI (Core)
+sentence-transformers==2.7.0
+numpy==1.26.4
+torch==2.3.1
+
+# Web Scraping
+beautifulsoup4==4.12.3
+lxml==4.9.0
+html5lib==1.1
+
+# Utilities
+python-multipart==0.0.9
+aiofiles==24.1.0
+
+# Note: Other packages from requirements.txt are optional and can be installed as needed

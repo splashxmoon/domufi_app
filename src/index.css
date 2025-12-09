@@ -7,6 +7,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Draggable region for Electron frameless window */
+.electron-drag-region {
+  -webkit-app-region: drag;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  z-index: 9999;
+  pointer-events: auto;
+  /* Only visible in Electron - hidden in browser */
+  display: none;
+}
+
+/* Show draggable region only when in Electron */
+body.electron .electron-drag-region {
+  display: block;
+}
+
+/* Prevent dragging on interactive elements */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="link"] {
+  -webkit-app-region: no-drag;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
