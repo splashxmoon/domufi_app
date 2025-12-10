@@ -412,24 +412,26 @@ const Trading = () => {
               </div>
 
               {/* 7d Change */}
-              <div>
-                <div style={{
-                  fontSize: '12px',
-                  color: 'var(--text-secondary, #9ca3af)',
-                  marginBottom: '4px'
-                }}>
-                  7d Change
+              {currentMarketData.priceChangePercent7d !== undefined && (
+                <div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: 'var(--text-secondary, #9ca3af)',
+                    marginBottom: '4px'
+                  }}>
+                    7d Change
+                  </div>
+                  <div style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: currentMarketData.priceChangePercent7d >= 0
+                      ? 'var(--accent-green, #10b981)'
+                      : 'var(--accent-red, #ef4444)'
+                  }}>
+                    {formatPercent(currentMarketData.priceChangePercent7d)}
+                  </div>
                 </div>
-                <div style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: currentMarketData.priceChangePercent7d >= 0
-                    ? 'var(--accent-green, #10b981)'
-                    : 'var(--accent-red, #ef4444)'
-                }}>
-                  {formatPercent(currentMarketData.priceChangePercent7d)}
-                </div>
-              </div>
+              )}
 
               {/* 24h Volume */}
               <div>
@@ -492,13 +494,30 @@ const Trading = () => {
               alignItems: 'center',
               marginBottom: '20px'
             }}>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                color: 'var(--text-primary, #f8f9fa)'
-              }}>
-                Price Chart
-              </h3>
+              {/* Property Name and Current Price */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: 'var(--text-primary, #f8f9fa)',
+                  margin: 0
+                }}>
+                  {selectedProperty?.name || 'Select Property'}
+                </h3>
+                {currentMarketData?.currentPrice && (
+                  <div style={{
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: 'var(--accent-blue, #3b82f6)'
+                  }}>
+                    {formatCurrency(currentMarketData.currentPrice)}
+                  </div>
+                )}
+              </div>
 
               {/* Timeframe Toggle */}
               <div style={{

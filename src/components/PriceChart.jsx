@@ -211,24 +211,6 @@ const PriceChart = ({ priceHistory = [], timeframe = '24h', currentPrice = 0 }) 
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative' }}>
       <Line data={chartData} options={options} />
-
-      {/* Current Price Indicator */}
-      {currentPrice > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          left: '12px',
-          background: 'rgba(22, 24, 29, 0.8)',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          fontSize: '14px',
-          fontWeight: '600',
-          color: 'var(--accent-blue, #3b82f6)'
-        }}>
-          ${currentPrice.toFixed(2)}
-        </div>
-      )}
     </div>
   );
 };
