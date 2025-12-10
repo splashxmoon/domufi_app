@@ -52,25 +52,36 @@ const generateInitialPriceHistory = (propertyId, tokenPrice) => {
   const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
 
   let currentPrice = tokenPrice;
-  const volatility = 0.02; // 2% volatility
-  const trend = 0.001; // 0.1% upward trend
+  // Real estate volatility - low but visible
+  const volatility = 0.008; // 0.8% hourly volatility (visible on charts, still realistic)
+  const trend = 0.0003; // 0.03% upward trend per hour (about 2% monthly)
+
+  // Use property ID as seed for consistent but varied history
+  let seed = propertyId * 12345;
+  const seededRandom = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
 
   for (let t = thirtyDaysAgo; t <= now; t += 60 * 60 * 1000) {
-    const randomChange = (Math.random() - 0.5) * 2 * volatility;
+    // Real estate has gradual price movements with occasional flat periods
+    const shouldChange = seededRandom() > 0.3; // 70% chance of price movement
+    const randomChange = shouldChange ? (seededRandom() - 0.5) * 2 * volatility : 0;
     currentPrice = currentPrice * (1 + randomChange + trend);
 
+    // Keep prices within realistic range (±8% over 30 days)
     const clampedPrice = Math.max(
-      tokenPrice * 0.7,
-      Math.min(tokenPrice * 1.3, currentPrice)
+      tokenPrice * 0.92,
+      Math.min(tokenPrice * 1.08, currentPrice)
     );
 
     history.push({
       timestamp: t,
       price: parseFloat(clampedPrice.toFixed(2)),
-      volume: Math.floor(Math.random() * 50) + 10,
-      high: parseFloat((clampedPrice * 1.01).toFixed(2)),
-      low: parseFloat((clampedPrice * 0.99).toFixed(2)),
-      open: parseFloat((clampedPrice * 0.995).toFixed(2)),
+      volume: Math.floor(seededRandom() * 30) + 5, // Lower volume for real estate
+      high: parseFloat((clampedPrice * 1.002).toFixed(2)), // Smaller intraday range
+      low: parseFloat((clampedPrice * 0.998).toFixed(2)),
+      open: parseFloat((clampedPrice * 0.999).toFixed(2)),
       close: parseFloat(clampedPrice.toFixed(2))
     });
   }
@@ -178,33 +189,79 @@ export const TradingProvider = ({ children }) => {
   // Initialize market data for properties
   const initializeMarketData = useCallback((propertyId, propertyName, tokenPrice) => {
     if (!marketData[propertyId]) {
+      // Generate price history first
+      const history = generateInitialPriceHistory(propertyId, tokenPrice);
+      const now = Date.now();
+      const oneDayAgo = now - (24 * 60 * 60 * 1000);
+      const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+
+      // Get current price (last in history)
+      const currentPrice = history.length > 0 ? history[history.length - 1].price : tokenPrice;
+
+      // Calculate 24h data
+      const history24h = history.filter(p => p.timestamp >= oneDayAgo);
+      const openPrice24h = history24h.length > 0 ? history24h[0].price : currentPrice;
+      const priceChange24h = currentPrice - openPrice24h;
+      const priceChangePercent24h = openPrice24h !== 0 ? (priceChange24h / openPrice24h) * 100 : 0;
+
+      // Calculate 7d data
+      const history7d = history.filter(p => p.timestamp >= sevenDaysAgo);
+      const openPrice7d = history7d.length > 0 ? history7d[0].price : currentPrice;
+      const priceChange7d = currentPrice - openPrice7d;
+      const priceChangePercent7d = openPrice7d !== 0 ? (priceChange7d / openPrice7d) * 100 : 0;
+
+      // Calculate high/low for periods
+      const highPrice24h = history24h.length > 0
+        ? Math.max(...history24h.map(p => p.high))
+        : currentPrice;
+      const lowPrice24h = history24h.length > 0
+        ? Math.min(...history24h.map(p => p.low))
+        : currentPrice;
+      const highPrice7d = history7d.length > 0
+        ? Math.max(...history7d.map(p => p.high))
+        : currentPrice;
+      const lowPrice7d = history7d.length > 0
+        ? Math.min(...history7d.map(p => p.low))
+        : currentPrice;
+
       const newMarketData = {
         propertyId,
         propertyName,
-        currentPrice: tokenPrice,
-        openPrice24h: tokenPrice,
-        highPrice24h: tokenPrice * 1.02,
-        lowPrice24h: tokenPrice * 0.98,
+        currentPrice,
+        // 24h data
+        openPrice24h,
+        highPrice24h,
+        lowPrice24h,
         volume24h: 0,
         volumeUSD24h: 0,
-        priceChange24h: 0,
-        priceChangePercent24h: 0,
+        priceChange24h,
+        priceChangePercent24h,
+        trades24h: 0,
+        // 7d data
+        openPrice7d,
+        highPrice7d,
+        lowPrice7d,
+        volume7d: 0,
+        volumeUSD7d: 0,
+        priceChange7d,
+        priceChangePercent7d,
+        trades7d: 0,
+        // Order book data
         bestBid: null,
         bestAsk: null,
         spread: 0,
         spreadPercent: 0,
-        lastUpdated: new Date().toISOString(),
-        trades24h: 0
+        lastUpdated: new Date().toISOString()
       };
 
       setMarketData(prev => ({ ...prev, [propertyId]: newMarketData }));
       setPriceHistory(prev => ({
         ...prev,
-        [propertyId]: generateInitialPriceHistory(propertyId, tokenPrice)
+        [propertyId]: history
       }));
 
       // Add some demo orders
-      const demoOrders = generateInitialOrders(propertyId, propertyName, tokenPrice);
+      const demoOrders = generateInitialOrders(propertyId, propertyName, currentPrice);
       setAllOrders(prev => [...prev, ...demoOrders]);
     }
   }, [marketData]);
@@ -333,16 +390,27 @@ export const TradingProvider = ({ children }) => {
       const current = prev[propertyId] || {};
       const now = new Date().toISOString();
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
       // Calculate 24h stats from recent trades
-      const recentTrades = allTrades.filter(
+      const recentTrades24h = allTrades.filter(
         t => t.propertyId === propertyId && new Date(t.executedAt) >= new Date(oneDayAgo)
       );
-      recentTrades.push(fill); // Include current fill
+      recentTrades24h.push(fill); // Include current fill
 
-      const volume24h = recentTrades.reduce((sum, t) => sum + t.tokenAmount, 0);
-      const volumeUSD24h = recentTrades.reduce((sum, t) => sum + t.totalValue, 0);
-      const trades24h = recentTrades.length;
+      const volume24h = recentTrades24h.reduce((sum, t) => sum + t.tokenAmount, 0);
+      const volumeUSD24h = recentTrades24h.reduce((sum, t) => sum + t.totalValue, 0);
+      const trades24h = recentTrades24h.length;
+
+      // Calculate 7d stats from recent trades
+      const recentTrades7d = allTrades.filter(
+        t => t.propertyId === propertyId && new Date(t.executedAt) >= new Date(sevenDaysAgo)
+      );
+      recentTrades7d.push(fill); // Include current fill
+
+      const volume7d = recentTrades7d.reduce((sum, t) => sum + t.tokenAmount, 0);
+      const volumeUSD7d = recentTrades7d.reduce((sum, t) => sum + t.totalValue, 0);
+      const trades7d = recentTrades7d.length;
 
       // Get current order book
       const { bids, asks } = getOrderBook(propertyId);
@@ -356,23 +424,37 @@ export const TradingProvider = ({ children }) => {
       const priceChange24h = fill.pricePerToken - openPrice24h;
       const priceChangePercent24h = openPrice24h ? (priceChange24h / openPrice24h) * 100 : 0;
 
+      const openPrice7d = current.openPrice7d || fill.pricePerToken;
+      const priceChange7d = fill.pricePerToken - openPrice7d;
+      const priceChangePercent7d = openPrice7d ? (priceChange7d / openPrice7d) * 100 : 0;
+
       return {
         ...prev,
         [propertyId]: {
           ...current,
           propertyId,
           currentPrice: fill.pricePerToken,
+          // 24h data
           highPrice24h: Math.max(current.highPrice24h || 0, fill.pricePerToken),
           lowPrice24h: Math.min(current.lowPrice24h || Infinity, fill.pricePerToken),
           volume24h,
           volumeUSD24h,
           priceChange24h,
           priceChangePercent24h,
+          trades24h,
+          // 7d data
+          highPrice7d: Math.max(current.highPrice7d || 0, fill.pricePerToken),
+          lowPrice7d: Math.min(current.lowPrice7d || Infinity, fill.pricePerToken),
+          volume7d,
+          volumeUSD7d,
+          priceChange7d,
+          priceChangePercent7d,
+          trades7d,
+          // Order book data
           bestBid,
           bestAsk,
           spread,
           spreadPercent,
-          trades24h,
           lastUpdated: now
         }
       };

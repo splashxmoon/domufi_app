@@ -411,6 +411,26 @@ const Trading = () => {
                 </div>
               </div>
 
+              {/* 7d Change */}
+              <div>
+                <div style={{
+                  fontSize: '12px',
+                  color: 'var(--text-secondary, #9ca3af)',
+                  marginBottom: '4px'
+                }}>
+                  7d Change
+                </div>
+                <div style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: currentMarketData.priceChangePercent7d >= 0
+                    ? 'var(--accent-green, #10b981)'
+                    : 'var(--accent-red, #ef4444)'
+                }}>
+                  {formatPercent(currentMarketData.priceChangePercent7d)}
+                </div>
+              </div>
+
               {/* 24h Volume */}
               <div>
                 <div style={{
