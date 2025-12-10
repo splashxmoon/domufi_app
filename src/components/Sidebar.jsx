@@ -12,13 +12,14 @@ export default function Sidebar({ isCollapsed, onToggle }) {
     if (path.includes('/transactions')) return 'transactions';
     if (path.includes('/portfolio')) return 'portfolio';
     if (path.includes('/wallet')) return 'wallet';
+    if (path.includes('/trading')) return 'trading';
     if (path.includes('/marketplace')) return 'marketplace';
     if (path.includes('/market-data')) return 'market-data';
     if (path.includes('/apply-tokenize')) return 'apply-tokenize';
     if (path.includes('/ai-insights')) return 'ai-insights';
     if (path.includes('/overview')) return 'overview';
-    if (path === '/dashboard' || path === '/dashboard/') return 'overview'; 
-    return 'overview'; 
+    if (path === '/dashboard' || path === '/dashboard/') return 'overview';
+    return 'overview';
   }, [location.pathname]);
   
   const active = getActiveTab();
@@ -118,6 +119,12 @@ export default function Sidebar({ isCollapsed, onToggle }) {
                 <path d="M9 9H15V15H9V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M3 9H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M9 3V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )} />
+
+            <NavItem id="trading" label={"Trading"} to="/dashboard/trading" svg={(
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 8L3 12L7 16M17 8L21 12L17 16M14 4L10 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             )} />
 

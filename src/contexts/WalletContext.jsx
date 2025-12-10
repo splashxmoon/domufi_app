@@ -223,12 +223,58 @@ export const WalletProvider = ({ children }) => {
 
   
   const setPrimaryPaymentMethod = (accountId) => {
-    setConnectedAccounts(prev => 
+    setConnectedAccounts(prev =>
       prev.map(acc => ({
         ...acc,
         primary: acc.id === accountId
       }))
     );
+  };
+
+  // Deduct trading fee
+  const deductTradingFee = (amount, description) => {
+    const transaction = {
+      id: `txn_${Date.now()}`,
+      type: 'trading_fee',
+      amount: parseFloat(amount),
+      description,
+      status: 'completed',
+      date: new Date().toISOString(),
+      method: 'wallet'
+    };
+
+    setWalletTransactions(prev => [transaction, ...prev]);
+    setWalletData(prev => ({
+      ...prev,
+      balance: prev.balance - parseFloat(amount),
+      availableBalance: prev.availableBalance - parseFloat(amount),
+      lastUpdated: new Date().toISOString()
+    }));
+
+    return transaction;
+  };
+
+  // Credit sale proceeds
+  const creditTradeProceeds = (amount, description) => {
+    const transaction = {
+      id: `txn_${Date.now()}`,
+      type: 'sale_proceeds',
+      amount: parseFloat(amount),
+      description,
+      status: 'completed',
+      date: new Date().toISOString(),
+      method: 'wallet'
+    };
+
+    setWalletTransactions(prev => [transaction, ...prev]);
+    setWalletData(prev => ({
+      ...prev,
+      balance: prev.balance + parseFloat(amount),
+      availableBalance: prev.availableBalance + parseFloat(amount),
+      lastUpdated: new Date().toISOString()
+    }));
+
+    return transaction;
   };
 
   const value = {
@@ -242,6 +288,8 @@ export const WalletProvider = ({ children }) => {
     removePaymentMethod,
     setPrimaryPaymentMethod,
     setWalletData,
+    deductTradingFee,
+    creditTradeProceeds,
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

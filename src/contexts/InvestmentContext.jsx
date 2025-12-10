@@ -456,6 +456,76 @@ export const InvestmentProvider = ({ children }) => {
     }));
   };
 
+  // Reduce tokens from an investment (for selling on secondary market)
+  const reduceInvestmentTokens = (investmentId, tokensToRemove) => {
+    setInvestments(prev => prev.map(inv => {
+      if (inv.id === investmentId) {
+        const newTokenAmount = inv.tokenAmount - tokensToRemove;
+
+        // If all tokens sold, mark as sold
+        if (newTokenAmount <= 0) {
+          return {
+            ...inv,
+            tokenAmount: 0,
+            status: 'sold',
+            soldDate: new Date().toISOString()
+          };
+        }
+
+        // Reduce tokens and recalculate proportionally
+        const proportion = newTokenAmount / inv.tokenAmount;
+        return {
+          ...inv,
+          tokenAmount: newTokenAmount,
+          totalInvested: inv.totalInvested * proportion
+        };
+      }
+      return inv;
+    }));
+  };
+
+  // Add investment from secondary market
+  const addSecondaryInvestment = (investmentData) => {
+    const newInvestment = {
+      id: Date.now().toString(),
+      propertyId: investmentData.propertyId,
+      propertyName: investmentData.propertyName,
+      propertyCity: investmentData.propertyCity || 'Unknown',
+      tokenAmount: investmentData.tokenAmount,
+      tokenPrice: investmentData.pricePerToken,
+      totalInvested: investmentData.totalValue,
+      platformFee: 0, // No platform fee on secondary market
+      annualROI: investmentData.annualROI || 8.5,
+      monthlyRent: investmentData.monthlyRent || 0,
+      purchaseDate: new Date().toISOString(),
+      paymentMethod: 'Secondary Market',
+      status: 'active',
+      lockPeriod: 0, // No lock period on secondary purchases
+      unlockDate: new Date().toISOString(), // Immediately unlocked
+      source: 'secondary'
+    };
+
+    setInvestments(prev => [...prev, newInvestment]);
+
+    // Add transaction
+    const transaction = {
+      id: Date.now().toString(),
+      type: 'purchase',
+      propertyName: investmentData.propertyName,
+      propertyCity: investmentData.propertyCity || 'Unknown',
+      amount: investmentData.totalValue,
+      tokens: investmentData.tokenAmount,
+      date: new Date().toISOString(),
+      status: 'completed',
+      paymentMethod: 'Secondary Market',
+      description: `Purchased ${investmentData.tokenAmount} tokens of ${investmentData.propertyName} on secondary market`,
+    };
+
+    setTransactions(prev => [transaction, ...prev]);
+
+    return newInvestment;
+  };
+
   const value = {
     investments,
     transactions,
@@ -466,7 +536,9 @@ export const InvestmentProvider = ({ children }) => {
     getInvestmentReturns,
     getAllInvestmentReturns,
     clearAllData,
-    updateTimestamp, 
+    updateTimestamp,
+    reduceInvestmentTokens,
+    addSecondaryInvestment,
   };
 
   return (

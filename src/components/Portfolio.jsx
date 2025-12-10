@@ -1073,6 +1073,39 @@ export default function Portfolio() {
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/dashboard/trading?property=${property.id}`);
+                            }}
+                            style={{
+                              padding: '10px 18px',
+                              background: 'var(--accent-blue)',
+                              border: '1px solid var(--accent-blue)',
+                              borderRadius: '8px',
+                              color: '#ffffff',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.8)';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'var(--accent-blue)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M7 8L3 12L7 16M17 8L21 12L17 16M14 4L10 20" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Trade Tokens
+                          </button>
+                          <button
                             onClick={(e) => openPropertyModal(property, e)}
                             style={{
                               padding: '10px 18px',
